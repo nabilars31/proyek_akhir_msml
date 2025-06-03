@@ -1,0 +1,40 @@
+name: CI ML Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-train:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Conda environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: mlflow-env
+        environment-file: MLProject/conda.yaml
+        python-version: 3.9.21
+
+    - name: Install dependencies
+      run: |
+        pip install mlflow==2.18.0 cloudpickle==3.1.1 numpy==2.0.2 pandas==2.2.3 scikit-learn==1.6.1 scipy==1.13.1
+
+    - name: Train Machine Learning model
+      run: |
+        cd MLProject
+        python modelling.py
+
+    - name: Upload MLflow artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: trained-model
+        path: MLProject/mlruns/
